@@ -14,7 +14,7 @@ ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.ALL);
  */
 
 // set TS types used as initial state
-type PropTypes = {  };
+type PropTypes = { };
 type StateTypes = { isReady: Boolean };
 
 // define component
