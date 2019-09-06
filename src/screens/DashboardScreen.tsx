@@ -3,12 +3,13 @@ import {Text} from 'react-native';
 import {Container, Content} from 'native-base';
 
 export default class Default extends React.Component {
+
   render () {
     return (
       <Container>
         <Content>
           <Text>
-            Register Screen
+            Dashboard Screen
           </Text>
         </Content>
       </Container>
