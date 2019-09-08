@@ -138,6 +138,11 @@ class LoginForm extends Component {
     });
   };
 
+  // Auto log in for dev purposes
+  componentDidMount () {
+    this.login()
+  }
+
   render() {
     const { from } = this.props.location.state || { from: { pathname: "/" } };
     const { redirectToReferrer } = this.state;
