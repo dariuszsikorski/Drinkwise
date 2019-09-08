@@ -1,12 +1,12 @@
 import React from 'react';
-import {Text} from 'react-native';
+import {Text, View} from 'react-native';
 import {Container, Content, Form, Picker} from 'native-base';
 import { StyleSheet } from "react-native";
 
 export default class Default extends React.Component {
 
   state = {
-    interval: '120min'
+    interval: '120'
   }
 
   handleIntervalPickerChange (newInterval) {
@@ -17,30 +17,40 @@ export default class Default extends React.Component {
     return (
       <Container style={styles.DashboardContainer}>
         <Content>
-          <Text>
-            Dashboard Screen
-          </Text>
 
-          <Form>
-            <Picker
-              note
-              mode="dropdown"
-              style={styles.DashboardIntervalPicker}
-              selectedValue={this.state.interval}
-              onValueChange={this.handleIntervalPickerChange.bind(this)}
-            >
-              <Picker.Item label="15 min" value="15min" />
-              <Picker.Item label="30 min" value="30min" />
-              <Picker.Item label="45 min" value="45min" />
-              <Picker.Item label="1hr" value="60min" />
-              <Picker.Item label="1hr 15min" value="75min" />
-              <Picker.Item label="1hr 30min" value="90min" />
-              <Picker.Item label="1hr 45min" value="105min" />
-              <Picker.Item label="2hr" value="120min" />
-            </Picker>
-          </Form>
 
-          <Text>{ this.state.interval }</Text>
+          <View style={styles.DashboardRow}>
+            <Text>Dashboard Screen</Text>
+          </View>
+
+
+          <View style={styles.DashboardRow}>
+            <Form>
+              <Picker
+                note
+                mode="dropdown"
+                style={styles.DashboardIntervalPicker}
+                selectedValue={this.state.interval}
+                onValueChange={this.handleIntervalPickerChange.bind(this)}
+              >
+                <Picker.Item label="15 min" value="15" />
+                <Picker.Item label="30 min" value="30" />
+                <Picker.Item label="45 min" value="45" />
+                <Picker.Item label="1hr" value="60" />
+                <Picker.Item label="1hr 15min" value="75" />
+                <Picker.Item label="1hr 30min" value="90" />
+                <Picker.Item label="1hr 45min" value="105" />
+                <Picker.Item label="2hr" value="120" />
+              </Picker>
+
+              <Text>{ this.state.interval }</Text>
+            </Form>
+          </View>
+
+          <View style={styles.DashboardRow}>
+            <Text>abcdef</Text>
+          </View>
+
 
         </Content>
       </Container>
@@ -56,6 +66,10 @@ const styles = StyleSheet.create({
     borderWidth: 5
   },
   DashboardIntervalPicker: {
-    width: 150,
-  }
+    width: 150
+  },
+  DashboardRow: {
+    borderWidth: 2,
+    borderColor: 'red'
+  },
 });
