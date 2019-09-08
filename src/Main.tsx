@@ -10,7 +10,6 @@ import {
 import * as firebase from 'firebase';
 import firebaseConfig from '../configs/firebase';
 import DashboardScreen from './screens/DashboardScreen';
-import SettingsScreen from './screens/SettingsScreen';
 import { Header, Title, Left, Right, Body } from 'native-base';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 
@@ -41,18 +40,8 @@ function Main () {
         </Right>
       </Header>
 
-      <View style={styles.MainNavigation}>
-        <Link to="/" style={styles.MainNavigationItem} underlayColor="#f0f4f7">
-          <Text>Dash</Text>
-        </Link>
-        <Link to="/settings" style={styles.MainNavigationItem} underlayColor="#f0f4f7">
-          <Text>Sett</Text>
-        </Link>
-      </View>
-
-      <Route exact path="/login" component={LoginForm} />
       <PrivateRoute exact path="/" component={DashboardScreen} />
-      <PrivateRoute exact path="/settings" component={SettingsScreen} />
+      <Route exact path="/login" component={LoginForm} />
       
     </NativeRouter>
   );
