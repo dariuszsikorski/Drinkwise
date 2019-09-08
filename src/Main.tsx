@@ -11,7 +11,8 @@ import * as firebase from 'firebase';
 import firebaseConfig from '../configs/firebase';
 import DashboardScreen from './screens/DashboardScreen';
 import SettingsScreen from './screens/SettingsScreen';
-
+import { Header, Title, Left, Right, Body } from 'native-base';
+import { getStatusBarHeight } from 'react-native-status-bar-height';
 
 /**
  * Initialize Firebase
@@ -26,23 +27,33 @@ firebase.initializeApp(firebaseConfig);
  */
 function Main () {
   return (
+    
     <NativeRouter>
-      <View style={styles.MainContainer}>
-        <View style={styles.MainNavigation}>
-          <Link to="/dashboard" style={styles.MainNavigationItem} underlayColor="#f0f4f7">
-            <Text>Dash</Text>
-          </Link>
-          <Link to="/settings" style={styles.MainNavigationItem} underlayColor="#f0f4f7">
-            <Text>Sett</Text>
-          </Link>
-        </View>
+
+      <Header style={styles.MainHeader}>
+        <Left>
+        </Left>
+        <Body>
+          <Title>DrinkWise</Title>
+        </Body>
+        <Right>
+          <SignOutButton />
+        </Right>
+      </Header>
+
+      <View style={styles.MainNavigation}>
+        <Link to="/" style={styles.MainNavigationItem} underlayColor="#f0f4f7">
+          <Text>Dash</Text>
+        </Link>
+        <Link to="/settings" style={styles.MainNavigationItem} underlayColor="#f0f4f7">
+          <Text>Sett</Text>
+        </Link>
       </View>
 
-        <SignOutButton />
-        <Route exact path="/login" component={LoginForm} />
-        <PrivateRoute exact path="/" component={DashboardScreen} />
-        <PrivateRoute exact path="/dashboard" component={DashboardScreen} />
-        <PrivateRoute exact path="/settings" component={SettingsScreen} />
+      <Route exact path="/login" component={LoginForm} />
+      <PrivateRoute exact path="/" component={DashboardScreen} />
+      <PrivateRoute exact path="/settings" component={SettingsScreen} />
+      
     </NativeRouter>
   );
 }
@@ -175,9 +186,9 @@ const styles = StyleSheet.create({
   LoginFormHeader: {
     fontSize: 30
   },
-  MainContainer: {
-    marginTop: 25,
-    padding: 10
+  MainHeader: {
+    paddingTop: getStatusBarHeight(),
+    height: 54 + getStatusBarHeight(),
   },
   MainNavigation: {
     flexDirection: "row",
