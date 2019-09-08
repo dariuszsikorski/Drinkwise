@@ -27,29 +27,22 @@ firebase.initializeApp(firebaseConfig);
 function Main () {
   return (
     <NativeRouter>
-      <View style={styles.container}>
-        <View style={styles.nav}>
-          <Link to="/public" style={styles.navItem} underlayColor="#f0f4f7">
-            <Text>Pgubl</Text>
-          </Link>
-          <Link to="/protected" style={styles.navItem} underlayColor="#f0f4f7">
-            <Text>Prot</Text>
-          </Link>
-          <Link to="/dashboard" style={styles.navItem} underlayColor="#f0f4f7">
+      <View style={styles.MainContainer}>
+        <View style={styles.MainNavigation}>
+          <Link to="/dashboard" style={styles.MainNavigationItem} underlayColor="#f0f4f7">
             <Text>Dash</Text>
           </Link>
-          <Link to="/settings" style={styles.navItem} underlayColor="#f0f4f7">
+          <Link to="/settings" style={styles.MainNavigationItem} underlayColor="#f0f4f7">
             <Text>Sett</Text>
           </Link>
         </View>
       </View>
 
         <SignOutButton />
-        <Route path="/public" component={Public} />
-        <Route path="/login" component={Login} />
-        <PrivateRoute path="/protected" component={Protected} />
-        <PrivateRoute path="/dashboard" component={DashboardScreen} />
-        <PrivateRoute path="/settings" component={SettingsScreen} />
+        <Route exact path="/login" component={LoginForm} />
+        <PrivateRoute exact path="/" component={DashboardScreen} />
+        <PrivateRoute exact path="/dashboard" component={DashboardScreen} />
+        <PrivateRoute exact path="/settings" component={SettingsScreen} />
     </NativeRouter>
   );
 }
@@ -91,10 +84,10 @@ const SignOutButton = withRouter(
     firebaseAuth.isAuthenticated ? (
       <View>
         <TouchableHighlight
-          style={styles.button}
+          style={styles.SessionButton}
           underlayColor="#f0f4f7"
           onPress={() => {
-            firebaseAuth.signout(() => history.push("/public"));
+            firebaseAuth.signout(() => history.push("/"));
           }}
         >
           <Text>Sign out</Text>
@@ -134,27 +127,9 @@ function PrivateRoute({ component: Component, ...rest }) {
 
 
 /**
- * Example public view
+ * Login form and redirection
  */
-function Public() {
-  return <Text>Public</Text>;
-}
-
-
-
-/**
- * Example private (protected) view
- */
-function Protected() {
-  return <Text>Protected</Text>;
-}
-
-
-
-/**
- * Login button and redirection
- */
-class Login extends Component {
+class LoginForm extends Component {
   state = { redirectToReferrer: false };
 
   login = () => {
@@ -172,11 +147,12 @@ class Login extends Component {
     }
 
     return (
-      <View>
-        <Text>Please login to visit page {from.pathname}</Text>
+      <View style={styles.LoginFormView}>
+        <Text>Welcome to Drinkwise</Text>
+        <Text style={styles.LoginFormHeader}>Login</Text>
 
         <TouchableHighlight
-          style={styles.button}
+          style={styles.SessionButton}
           underlayColor="#f0f4f7"
           onPress={this.login}
         >
@@ -193,20 +169,26 @@ class Login extends Component {
  * App styles
  */
 const styles = StyleSheet.create({
-  container: {
+  LoginFormView: {
+    borderWidth: 5
+  },
+  LoginFormHeader: {
+    fontSize: 30
+  },
+  MainContainer: {
     marginTop: 25,
     padding: 10
   },
-  nav: {
+  MainNavigation: {
     flexDirection: "row",
     justifyContent: "space-around"
   },
-  navItem: {
+  MainNavigationItem: {
     flex: 1,
     alignItems: "center",
     padding: 10
   },
-  button: {
+  SessionButton: {
     width: 200,
     backgroundColor: "green",
     justifyContent: "center",
