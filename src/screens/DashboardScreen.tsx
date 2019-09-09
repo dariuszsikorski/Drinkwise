@@ -2,13 +2,16 @@ import React from 'react';
 import {Container, Content, Form, Picker} from 'native-base';
 import { StyleSheet, AsyncStorage, Image, Text, View, Button, TouchableOpacity } from "react-native";
 import DateTimePicker from "react-native-modal-datetime-picker";
+import { Audio } from 'expo-av';
 
 /*
  * Load images from assets folder
  */
 const assets = {
   cupFull: require('../../assets/cup-full.png'),
-  cupEmpty: require('../../assets/cup-empty.png')
+  cupEmpty: require('../../assets/cup-empty.png'),
+  iceCubes: require('../../assets/ice-cubes.mp3'),
+  gulp: require('../../assets/gulp.mp3')
 }
 
 /**
@@ -60,7 +63,6 @@ export default class Dashboard extends React.Component<
     // bind interval to component state
     this.setState({ nextCupWatcherId: intervalId })
 
-    // this.storeWaterCupStatus();
     this.loadWaterCupStatus();
   }
 
@@ -88,7 +90,7 @@ export default class Dashboard extends React.Component<
   loadWaterCupStatus = async () => {
     // console.log('retreiving');
     try {
-      const storedWaterCup = await AsyncStorage.getItem('WATER_CUPh');
+      const storedWaterCup = await AsyncStorage.getItem('WATER_CUP');
 
       if (storedWaterCup !== null) {
         // water cup was loaded - move it to state
@@ -109,14 +111,18 @@ export default class Dashboard extends React.Component<
   /**
    * Resets current water cup to a fresh one
    */
-  reinitWaterCupStatus = () => {
+  reinitWaterCupStatus = async () => {
     const emptyWaterCup = {
       createdDate: new Date(),
       isEmpty: false
     }
 
     this.setState({ currentCup: emptyWaterCup })
-    // this.storeWaterCupStatus()
+
+    const soundObject = new Audio.Sound();
+    await soundObject.loadAsync(assets.iceCubes);
+    await soundObject.playAsync();
+
   }
 
   /**
@@ -185,10 +191,23 @@ export default class Dashboard extends React.Component<
   /**
    * Empty the water cup when its touched
    */
-  handleWaterCupTouch () {
+  async handleWaterCupTouch () {
+
+    // escape further actions while cup is already empty
+    if (this.state.currentCup.isEmpty) {
+      return
+    }
+
     const currentCup = {...this.state.currentCup}
     currentCup.isEmpty = true;
     this.setState({currentCup})
+
+    this.storeWaterCupStatus()
+
+    const soundObject = new Audio.Sound();
+    await soundObject.loadAsync(assets.gulp);
+    await soundObject.playAsync();
+
   }
 
   /**
@@ -257,9 +276,6 @@ export default class Dashboard extends React.Component<
             <Text>Cup: {JSON.stringify(this.state.currentCup, null, 2)}</Text>
           </View>
 
-
-
-          
         </Content>
       </Container>
     )
