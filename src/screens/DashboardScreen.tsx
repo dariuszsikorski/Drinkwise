@@ -1,8 +1,15 @@
 import React from 'react';
 import {Container, Content, Form, Picker} from 'native-base';
-import { StyleSheet, AsyncStorage, Image, Text, View, Button } from "react-native";
+import { StyleSheet, AsyncStorage, Image, Text, View, Button, TouchableOpacity } from "react-native";
 import DateTimePicker from "react-native-modal-datetime-picker";
 
+/*
+ * Load images from assets folder
+ */
+const assets = {
+  cupFull: require('../../assets/cup-full.png'),
+  cupEmpty: require('../../assets/cup-empty.png')
+}
 
 /**
  * Define Dashboard component
@@ -16,7 +23,10 @@ export default class Dashboard extends React.Component<
   beginTime: string,
   endTime: string,
   nextCupWatcherId: any,
-  currentCup: Object | null,
+  currentCup: {
+    createdDate: Date,
+    isEmpty: boolean
+  },
 }> {
 
   /**
@@ -31,8 +41,11 @@ export default class Dashboard extends React.Component<
       beginTime: '',
       endTime: '',
       nextCupWatcherId: null,
-      currentCup: null,
-    };
+      currentCup: {
+        createdDate: new Date(),
+        isEmpty: false
+      },
+    }
   }
 
   /**
@@ -47,8 +60,8 @@ export default class Dashboard extends React.Component<
     // bind interval to component state
     this.setState({ nextCupWatcherId: intervalId })
 
-    // this.storeCurrentWaterCup();
-    this.loadCurrentWaterCup();
+    // this.storeWaterCupStatus();
+    this.loadWaterCupStatus();
   }
 
   /**
@@ -60,22 +73,22 @@ export default class Dashboard extends React.Component<
     clearInterval(this.state.nextCupWatcherId);
   }
 
-  storeCurrentWaterCup = async () => {
+  storeWaterCupStatus = async () => {
     try {
       // store current water cup
-      const currentWaterCup = JSON.stringify(this.state.currentCup)
-      await AsyncStorage.setItem('WATER_CUP', currentWaterCup);
+      const waterCupStatus = JSON.stringify(this.state.currentCup)
+      await AsyncStorage.setItem('WATER_CUP', waterCupStatus);
 
     } catch (error) {
       // error with storing water cup
       console.log('Error while storing water cup', error)
     }
-  };
+  }
 
-  loadCurrentWaterCup = async () => {
+  loadWaterCupStatus = async () => {
     // console.log('retreiving');
     try {
-      const storedWaterCup = await AsyncStorage.getItem('WATER_CUP');
+      const storedWaterCup = await AsyncStorage.getItem('WATER_CUPh');
 
       if (storedWaterCup !== null) {
         // water cup was loaded - move it to state
@@ -85,25 +98,25 @@ export default class Dashboard extends React.Component<
       } else {
         // water cup was not loaded - reinit current cup
         console.log('water cup was not loaded - reinit current cup')
-        this.reinitCurrentWaterCup()
+        this.reinitWaterCupStatus()
       }
     } catch (error) {
       // error with retrieving water cup
       console.log('Error while getting water cup!', error)
     }
-  };
+  }
 
   /**
    * Resets current water cup to a fresh one
    */
-  reinitCurrentWaterCup () {
+  reinitWaterCupStatus = () => {
     const emptyWaterCup = {
       createdDate: new Date(),
       isEmpty: false
     }
 
     this.setState({ currentCup: emptyWaterCup })
-    this.storeCurrentWaterCup()
+    // this.storeWaterCupStatus()
   }
 
   /**
@@ -120,14 +133,14 @@ export default class Dashboard extends React.Component<
    */
   showBeginTimePicker = () => {
     this.setState({ isBeginTimePickerVisible: true });
-  };
+  }
 
   /**
    * Hide Begin time picker
    */
   hideBeginTimePicker = () => {
     this.setState({ isBeginTimePickerVisible: false });
-  };
+  }
 
   /**
    * Handle Pick of Begin time
@@ -135,7 +148,7 @@ export default class Dashboard extends React.Component<
   handleBeginTimePicked = date => {
     this.setState({ beginTime: date });
     this.hideBeginTimePicker();
-  };
+  }
 
   /**
    * Show End time picker
@@ -143,7 +156,7 @@ export default class Dashboard extends React.Component<
   showEndTimePicker = () => {
     console.log('showEndTimePicker')
     this.setState({ isEndTimePickerVisible: true });
-  };
+  }
 
   /**
    * Hide End time picker
@@ -151,7 +164,7 @@ export default class Dashboard extends React.Component<
   hideEndTimePicker = () => {
     console.log('hideEndTimePicker')
     this.setState({ isEndTimePickerVisible: false });
-  };
+  }
 
   /**
    * Handle pick of end time
@@ -160,13 +173,22 @@ export default class Dashboard extends React.Component<
     console.log("End time picked: ", date);
     this.setState({ endTime: date });
     this.hideEndTimePicker();
-  };
+  }
 
   /**
    * Handle Pick of reminder interval
    */
   handleIntervalPicked (newInterval) {
     this.setState({ timeBetweenCups: newInterval })
+  }
+
+  /**
+   * Empty the water cup when its touched
+   */
+  handleWaterCupTouch () {
+    const currentCup = {...this.state.currentCup}
+    currentCup.isEmpty = true;
+    this.setState({currentCup})
   }
 
   /**
@@ -178,7 +200,12 @@ export default class Dashboard extends React.Component<
         <Content>
 
           <View style={styles.DashboardRow}>
-            <Text>Dashboard Screen</Text>
+            <TouchableOpacity onPress={this.handleWaterCupTouch.bind(this)}>
+              <Image
+                style={{height: 254, width: 148}}
+                source={this.state.currentCup.isEmpty ? assets.cupEmpty : assets.cupFull}
+              />
+            </TouchableOpacity>
           </View>
 
           <View style={styles.DashboardRow}>
@@ -190,14 +217,15 @@ export default class Dashboard extends React.Component<
                 selectedValue={this.state.timeBetweenCups}
                 onValueChange={this.handleIntervalPicked.bind(this)}
               >
+                <Picker.Item label="1 min" value="1" />
                 <Picker.Item label="15 min" value="15" />
                 <Picker.Item label="30 min" value="30" />
                 <Picker.Item label="45 min" value="45" />
-                <Picker.Item label="1hr" value="60" />
-                <Picker.Item label="1hr 15min" value="75" />
-                <Picker.Item label="1hr 30min" value="90" />
-                <Picker.Item label="1hr 45min" value="105" />
-                <Picker.Item label="2hr" value="120" />
+                <Picker.Item label="60 min" value="60" />
+                <Picker.Item label="75 min" value="75" />
+                <Picker.Item label="90 min" value="90" />
+                <Picker.Item label="105 min" value="105" />
+                <Picker.Item label="120 min" value="120" />
               </Picker>
               <Text>{ this.state.timeBetweenCups }</Text>
             </Form>
@@ -229,16 +257,7 @@ export default class Dashboard extends React.Component<
             <Text>Cup: {JSON.stringify(this.state.currentCup, null, 2)}</Text>
           </View>
 
-          <View style={styles.DashboardRow}>
-            <Image
-              style={{height: 254, width: 148}}
-              source={require('../../assets/cup-full.png')}
-            />
-            <Image
-              style={{height: 254, width: 148}}
-              source={require('../../assets/cup-empty.png')}
-            />
-          </View>
+
 
           
         </Content>
