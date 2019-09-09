@@ -22,18 +22,17 @@ const assets = {
 export default class Dashboard extends React.Component<
 { /* Prop types */},
 { /* State types */
-  minutesBetweenCups: number,
-  isBeginTimePickerVisible: boolean,
-  isEndTimePickerVisible: boolean,
-  beginTime: string,
-  endTime: string,
   nextCupWatcherId: any,
   nextDrinkCountdownText: string,
-  currentCup: {
+  isBeginTimePickerVisible: boolean,
+  isEndTimePickerVisible: boolean,
+  persistent: {
+    beginTime: Date,
+    endTime: Date,
+    minutesBetweenCups: number,
     lastDrinkDate: Date,
     isEmpty: boolean
   },
-  persistent: any,
 }> {
 
   /**
@@ -42,24 +41,22 @@ export default class Dashboard extends React.Component<
   constructor(props) {
     super(props);
     this.state = {
-      minutesBetweenCups: 0.1,
+      nextCupWatcherId: null,
       nextDrinkCountdownText: null,
       isBeginTimePickerVisible: false,
       isEndTimePickerVisible: false,
-      beginTime: '',
-      endTime: '',
-      nextCupWatcherId: null,
-      currentCup: {
-        lastDrinkDate: null,
-        isEmpty: false
-      },
       persistent: {
+        beginTime: new Date(1568095200635), // 8:00
+        endTime: new Date(1568145600087), // 22:00
+        minutesBetweenCups: 0.1, // 6sec
+        lastDrinkDate: new Date(0),
+        isEmpty: false
       }
     }
   }
 
   /**
-   * Helper for setting state.persistent with AsyncStorage autosave
+   * Helper for setting state.persistent and saving in AsyncStorage
    * merges current data in state.persistent with given payload object
    */
   async setPersistentState (newPersistentState: object) {
@@ -85,7 +82,7 @@ export default class Dashboard extends React.Component<
 
   /**
    * Helper for populating state.persistent from AsyncStorage
-   * merges current state.persistent with stored data
+   * merges current state.persistent with already stored data
    */
   async populatePersistentState () {
 
@@ -95,6 +92,7 @@ export default class Dashboard extends React.Component<
 
       if (persistentData !== null) {
         // populate state.persistent with loaded data
+        console.log('populating state with', persistentData)
         this.setPersistentState(JSON.parse(persistentData));
       }
     } catch (error) {
@@ -121,10 +119,8 @@ export default class Dashboard extends React.Component<
     const intervalId =
       setInterval(this.countdownNextTick.bind(this), 1000);
 
-    // bind interval to component state
+    // bind counter ID to component state
     this.setState({ nextCupWatcherId: intervalId })
-
-    this.loadWaterCupStatus();
   }
 
   /**
@@ -136,49 +132,11 @@ export default class Dashboard extends React.Component<
     clearInterval(this.state.nextCupWatcherId);
   }
 
-  storeWaterCupStatus = async () => {
-    try {
-      // store current water cup
-      const waterCupStatus = JSON.stringify(this.state.currentCup)
-      await AsyncStorage.setItem('WATER_CUP', waterCupStatus);
-
-    } catch (error) {
-      // error with storing water cup
-      console.log('Error while storing water cup', error)
-    }
-  }
-
-  loadWaterCupStatus = async () => {
-    // console.log('retreiving');
-    try {
-      const storedWaterCup = await AsyncStorage.getItem('WATER_CUP');
-
-      if (storedWaterCup !== null) {
-        // water cup was loaded - move it to state
-        console.log('water cup was loaded - move it to state')
-        this.setState({ currentCup: JSON.parse(storedWaterCup) })
-
-      } else {
-        // water cup was not loaded - reinit current cup
-        console.log('water cup was not loaded - reinit current cup')
-        this.reinitWaterCupStatus()
-      }
-    } catch (error) {
-      // error with retrieving water cup
-      console.log('Error while getting water cup!', error)
-    }
-  }
-
   /**
    * Resets current water cup to a fresh one
    */
   reinitWaterCupStatus = async () => {
-    const emptyWaterCup = {
-      ...this.state.currentCup
-    }
-    emptyWaterCup.isEmpty = false;
-
-    this.setState({ currentCup: emptyWaterCup })
+    this.setPersistentState({ isEmpty: false })
 
     const soundObject = new Audio.Sound();
     await soundObject.loadAsync(assets.iceCubes);
@@ -193,12 +151,12 @@ export default class Dashboard extends React.Component<
   countdownNextTick () {
 
     // skip checking if i should drink next cup if its already full
-    if (!this.state.currentCup.isEmpty) {
+    if (!this.state.persistent.isEmpty) {
       return
     }
 
-    const minutesOffset = this.state.minutesBetweenCups;
-    const lastCupDate = this.state.currentCup.lastDrinkDate;
+    const minutesOffset = this.state.persistent.minutesBetweenCups;
+    const lastCupDate = this.state.persistent.lastDrinkDate;
 
     // minutesOffset
     const offsetedLastCupDate = moment(lastCupDate).add(minutesOffset, 'm').toDate();
@@ -237,7 +195,7 @@ export default class Dashboard extends React.Component<
    * Handle Pick of Begin time
    */
   handleBeginTimePicked = date => {
-    this.setState({ beginTime: date });
+    this.setPersistentState({ beginTime: date });
     this.hideBeginTimePicker();
   }
 
@@ -262,7 +220,7 @@ export default class Dashboard extends React.Component<
    */
   handleEndTimePicked = date => {
     console.log("End time picked: ", date);
-    this.setState({ endTime: date });
+    this.setPersistentState({ endTime: date });
     this.hideEndTimePicker();
   }
 
@@ -270,7 +228,7 @@ export default class Dashboard extends React.Component<
    * Handle Pick of reminder interval
    */
   handleIntervalPicked (newInterval) {
-    this.setState({ minutesBetweenCups: newInterval })
+    this.setPersistentState({ minutesBetweenCups: newInterval })
   }
 
   /**
@@ -279,16 +237,14 @@ export default class Dashboard extends React.Component<
   async handleWaterCupTouch () {
 
     // escape further actions while cup is already empty
-    if (this.state.currentCup.isEmpty) {
+    if (this.state.persistent.isEmpty) {
       return
     }
 
-    const currentCup = {...this.state.currentCup}
-    currentCup.isEmpty = true;
-    currentCup.lastDrinkDate = new Date();
-    this.setState({currentCup})
-
-    this.storeWaterCupStatus()
+    this.setPersistentState({
+      isEmpty: true,
+      lastDrinkDate: new Date()
+    })
 
     const soundObject = new Audio.Sound();
     await soundObject.loadAsync(assets.gulp);
@@ -308,7 +264,7 @@ export default class Dashboard extends React.Component<
             <TouchableOpacity onPress={this.handleWaterCupTouch.bind(this)}>
               <Image
                 style={{height: 254, width: 148}}
-                source={this.state.currentCup.isEmpty ? assets.cupEmpty : assets.cupFull}
+                source={this.state.persistent.isEmpty ? assets.cupEmpty : assets.cupFull}
               />
             </TouchableOpacity>
             <Text>Next drink in: {this.state.nextDrinkCountdownText}</Text>
@@ -320,7 +276,7 @@ export default class Dashboard extends React.Component<
                 note
                 mode="dropdown"
                 style={styles.DashboardIntervalPicker}
-                selectedValue={this.state.minutesBetweenCups}
+                selectedValue={this.state.persistent.minutesBetweenCups}
                 onValueChange={this.handleIntervalPicked.bind(this)}
               >
                 <Picker.Item label="6 seconds" value={0.1} />
@@ -333,7 +289,7 @@ export default class Dashboard extends React.Component<
                 <Picker.Item label="1 hour 45 min" value={105} />
                 <Picker.Item label="2 hours" value={120} />
               </Picker>
-              <Text>{ this.state.minutesBetweenCups }</Text>
+              <Text>{ this.state.persistent.minutesBetweenCups }</Text>
             </Form>
           </View>
 
@@ -346,7 +302,7 @@ export default class Dashboard extends React.Component<
               onConfirm={this.handleBeginTimePicked}
               onCancel={this.hideBeginTimePicker}
             />
-            <Text>Begin: {this.state.beginTime.toString()}</Text>
+            <Text>Begin: {this.state.persistent.beginTime.toString()}</Text>
 
             <Button title="End Time" onPress={this.showEndTimePicker} />
             <DateTimePicker
@@ -356,7 +312,7 @@ export default class Dashboard extends React.Component<
               onConfirm={this.handleEndTimePicked}
               onCancel={this.hideEndTimePicker}
             />
-            <Text>End: {this.state.endTime.toString()}</Text>
+            <Text>End: {this.state.persistent.endTime.toString()}</Text>
           </View>
 
           <View style={styles.DashboardRow}>
