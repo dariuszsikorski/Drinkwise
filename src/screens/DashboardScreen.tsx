@@ -3,6 +3,8 @@ import {Container, Content, Form, Picker} from 'native-base';
 import { StyleSheet, AsyncStorage, Image, Text, View, Button, TouchableOpacity } from "react-native";
 import DateTimePicker from "react-native-modal-datetime-picker";
 import { Audio } from 'expo-av';
+import moment from "moment";
+
 
 /*
  * Load images from assets folder
@@ -20,14 +22,15 @@ const assets = {
 export default class Dashboard extends React.Component<
 { /* Prop types */},
 { /* State types */
-  timeBetweenCups: string,
+  minutesBetweenCups: number,
   isBeginTimePickerVisible: boolean,
   isEndTimePickerVisible: boolean,
   beginTime: string,
   endTime: string,
   nextCupWatcherId: any,
+  nextDrinkCountdownText: string,
   currentCup: {
-    createdDate: Date,
+    lastDrinkDate: Date,
     isEmpty: boolean
   },
 }> {
@@ -38,14 +41,15 @@ export default class Dashboard extends React.Component<
   constructor(props) {
     super(props);
     this.state = {
-      timeBetweenCups: '120',
+      minutesBetweenCups: 0.1,
+      nextDrinkCountdownText: null,
       isBeginTimePickerVisible: false,
       isEndTimePickerVisible: false,
       beginTime: '',
       endTime: '',
       nextCupWatcherId: null,
       currentCup: {
-        createdDate: new Date(),
+        lastDrinkDate: null,
         isEmpty: false
       },
     }
@@ -58,7 +62,7 @@ export default class Dashboard extends React.Component<
 
     // start counting every second till next cup of water
     const intervalId =
-      setInterval(this.shouldIDrinkNextCup, 1000);
+      setInterval(this.nextCupCountdownTick.bind(this), 1000);
 
     // bind interval to component state
     this.setState({ nextCupWatcherId: intervalId })
@@ -113,9 +117,9 @@ export default class Dashboard extends React.Component<
    */
   reinitWaterCupStatus = async () => {
     const emptyWaterCup = {
-      createdDate: new Date(),
-      isEmpty: false
+      ...this.state.currentCup
     }
+    emptyWaterCup.isEmpty = false;
 
     this.setState({ currentCup: emptyWaterCup })
 
@@ -126,12 +130,36 @@ export default class Dashboard extends React.Component<
   }
 
   /**
-   * This method ensures if it's a proper
+   * This method checks if it's a proper
    * moment to drink next cup of water
    */
-  shouldIDrinkNextCup () {
-    // TODO
-    console.log('checking')
+  nextCupCountdownTick () {
+
+    // skip checking if i should drink next cup if its already full
+    if (!this.state.currentCup.isEmpty) {
+      return
+    }
+
+    const minutesOffset = this.state.minutesBetweenCups;
+    const lastCupDate = this.state.currentCup.lastDrinkDate;
+
+    // minutesOffset
+    const offsetedLastCupDate = moment(lastCupDate).add(minutesOffset, 'm').toDate();
+    const currentMoment = new Date();
+
+    const countdown = moment.duration(moment(offsetedLastCupDate).diff(moment(currentMoment)))
+
+    const formatedCountdown = countdown.asMilliseconds() <= 0
+      ? 'Now!' : moment.utc(countdown.add(1, 's').as('milliseconds')).format('HH:mm:ss')
+
+    this.setState({ nextDrinkCountdownText: formatedCountdown })
+
+    const isOvertime = moment(currentMoment).isAfter(offsetedLastCupDate);
+
+    if (isOvertime) {
+      this.reinitWaterCupStatus()
+    }
+
   }
 
   /**
@@ -185,7 +213,7 @@ export default class Dashboard extends React.Component<
    * Handle Pick of reminder interval
    */
   handleIntervalPicked (newInterval) {
-    this.setState({ timeBetweenCups: newInterval })
+    this.setState({ minutesBetweenCups: newInterval })
   }
 
   /**
@@ -200,6 +228,7 @@ export default class Dashboard extends React.Component<
 
     const currentCup = {...this.state.currentCup}
     currentCup.isEmpty = true;
+    currentCup.lastDrinkDate = new Date();
     this.setState({currentCup})
 
     this.storeWaterCupStatus()
@@ -225,6 +254,7 @@ export default class Dashboard extends React.Component<
                 source={this.state.currentCup.isEmpty ? assets.cupEmpty : assets.cupFull}
               />
             </TouchableOpacity>
+            <Text>Next drink in: {this.state.nextDrinkCountdownText}</Text>
           </View>
 
           <View style={styles.DashboardRow}>
@@ -233,20 +263,20 @@ export default class Dashboard extends React.Component<
                 note
                 mode="dropdown"
                 style={styles.DashboardIntervalPicker}
-                selectedValue={this.state.timeBetweenCups}
+                selectedValue={this.state.minutesBetweenCups}
                 onValueChange={this.handleIntervalPicked.bind(this)}
               >
-                <Picker.Item label="1 min" value="1" />
-                <Picker.Item label="15 min" value="15" />
-                <Picker.Item label="30 min" value="30" />
-                <Picker.Item label="45 min" value="45" />
-                <Picker.Item label="60 min" value="60" />
-                <Picker.Item label="75 min" value="75" />
-                <Picker.Item label="90 min" value="90" />
-                <Picker.Item label="105 min" value="105" />
-                <Picker.Item label="120 min" value="120" />
+                <Picker.Item label="6 seconds" value={0.1} />
+                <Picker.Item label="15 minutes" value={15} />
+                <Picker.Item label="30 minutes" value={30} />
+                <Picker.Item label="45 minutes" value={45} />
+                <Picker.Item label="1 hour" value={60} />
+                <Picker.Item label="1 hour 15 min" value={75} />
+                <Picker.Item label="1 hour 30 min" value={90} />
+                <Picker.Item label="1 hour 45 min" value={105} />
+                <Picker.Item label="2 hours" value={120} />
               </Picker>
-              <Text>{ this.state.timeBetweenCups }</Text>
+              <Text>{ this.state.minutesBetweenCups }</Text>
             </Form>
           </View>
 
@@ -273,7 +303,7 @@ export default class Dashboard extends React.Component<
           </View>
 
           <View style={styles.DashboardRow}>
-            <Text>Cup: {JSON.stringify(this.state.currentCup, null, 2)}</Text>
+            <Text>Cup: {JSON.stringify(this.state, null, 2)}</Text>
           </View>
 
         </Content>
@@ -290,7 +320,7 @@ const styles = StyleSheet.create({
     borderWidth: 5
   },
   DashboardIntervalPicker: {
-    width: 150
+    width: 190
   },
   DashboardRow: {
     borderWidth: 2,
