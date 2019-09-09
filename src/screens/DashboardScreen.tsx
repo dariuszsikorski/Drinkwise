@@ -22,7 +22,7 @@ const assets = {
 export default class Dashboard extends React.Component<
 { /* Prop types */},
 { /* State types */
-  nextCupWatcherId: any,
+  nextCupWatcherId: number,
   nextDrinkCountdownText: string,
   isBeginTimePickerVisible: boolean,
   isEndTimePickerVisible: boolean,
@@ -194,7 +194,7 @@ export default class Dashboard extends React.Component<
   /**
    * Handle Pick of Begin time
    */
-  handleBeginTimePicked = date => {
+  handleBeginTimePicked = (date: Date) => {
     this.setPersistentState({ beginTime: date });
     this.hideBeginTimePicker();
   }
@@ -294,25 +294,32 @@ export default class Dashboard extends React.Component<
           </View>
 
           <View style={styles.DashboardRow}>
-            <Button title="Begin Time" onPress={this.showBeginTimePicker} />
+
+            <TouchableOpacity onPress={this.showBeginTimePicker}>
+              <Text >Begin: {moment(this.state.persistent.beginTime).format('HH:mm')}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={this.showEndTimePicker}>
+              <Text>End: {moment(this.state.persistent.endTime).format('HH:mm')}</Text>
+            </TouchableOpacity>
+
             <DateTimePicker
               mode='time'
+              date={new Date(this.state.persistent.beginTime)}
               timePickerModeAndroid='spinner'
               isVisible={this.state.isBeginTimePickerVisible}
               onConfirm={this.handleBeginTimePicked}
               onCancel={this.hideBeginTimePicker}
             />
-            <Text>Begin: {this.state.persistent.beginTime.toString()}</Text>
 
-            <Button title="End Time" onPress={this.showEndTimePicker} />
             <DateTimePicker
               mode='time'
+              date={new Date(this.state.persistent.endTime)}
               timePickerModeAndroid='spinner'
               isVisible={this.state.isEndTimePickerVisible}
               onConfirm={this.handleEndTimePicked}
               onCancel={this.hideEndTimePicker}
             />
-            <Text>End: {this.state.persistent.endTime.toString()}</Text>
           </View>
 
           <View style={styles.DashboardRow}>
