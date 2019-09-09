@@ -1,10 +1,7 @@
 import React from 'react';
-import {Text, View, Button} from 'react-native';
 import {Container, Content, Form, Picker} from 'native-base';
-import { StyleSheet } from "react-native";
+import { StyleSheet, AsyncStorage, Image, Text, View, Button } from "react-native";
 import DateTimePicker from "react-native-modal-datetime-picker";
-import {AsyncStorage} from 'react-native';
-
 
 
 /**
@@ -231,6 +228,18 @@ export default class Dashboard extends React.Component<
           <View style={styles.DashboardRow}>
             <Text>Cup: {JSON.stringify(this.state.currentCup, null, 2)}</Text>
           </View>
+
+          <View style={styles.DashboardRow}>
+            <Image
+              style={{height: 254, width: 148}}
+              source={require('../../assets/cup-full.png')}
+            />
+            <Image
+              style={{height: 254, width: 148}}
+              source={require('../../assets/cup-empty.png')}
+            />
+          </View>
+
           
         </Content>
       </Container>
