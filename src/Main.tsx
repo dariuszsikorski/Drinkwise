@@ -3,7 +3,6 @@ import { StyleSheet, Text, View, TouchableHighlight } from "react-native";
 import {
   NativeRouter,
   Route,
-  Link,
   Redirect,
   withRouter
 } from "react-router-native";
@@ -99,8 +98,6 @@ const SignOutButton = withRouter(
     )
 );
 
-
-
 /**
  * Routes requiring authentication
  */
@@ -123,8 +120,6 @@ function PrivateRoute({ component: Component, ...rest }) {
     />
   );
 }
-
-
 
 /**
  * Login form and redirection
