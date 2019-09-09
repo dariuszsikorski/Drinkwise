@@ -33,6 +33,7 @@ export default class Dashboard extends React.Component<
     lastDrinkDate: Date,
     isEmpty: boolean
   },
+  persistent: any,
 }> {
 
   /**
@@ -52,17 +53,73 @@ export default class Dashboard extends React.Component<
         lastDrinkDate: null,
         isEmpty: false
       },
+      persistent: {
+      }
     }
   }
 
   /**
-   * Actions after component is created
+   * Helper for setting state.persistent with AsyncStorage autosave
+   * merges current data in state.persistent with given payload object
+   */
+  async setPersistentState (newPersistentState: object) {
+
+    // merge current persistent state with given payload
+    const finalPersistentState = {
+      ...this.state.persistent,
+      ...newPersistentState
+    }
+
+    // set merged persistent state in component
+    this.setState({ persistent: finalPersistentState})
+
+    try {
+      // store merged persistent state in storage
+      await AsyncStorage.setItem('PERSISTENT_STATE', JSON.stringify(finalPersistentState));
+
+    } catch (error) {
+      // handle error while saving storage
+      console.error('Error while saving to storage', error)
+    }
+  }
+
+  /**
+   * Helper for populating state.persistent from AsyncStorage
+   * merges current state.persistent with stored data
+   */
+  async populatePersistentState () {
+
+    try {
+      // load persistent data from storage
+      const persistentData = await AsyncStorage.getItem('PERSISTENT_STATE');
+
+      if (persistentData !== null) {
+        // populate state.persistent with loaded data
+        this.setPersistentState(JSON.parse(persistentData));
+      }
+    } catch (error) {
+
+      // handle error while loading persistent data
+      console.error('Error while loading persistent data', error)
+    }
+  }
+
+  /**
+   * Tigger actions before component is mounted
+   */
+  componentWillMount () {
+    // populate this.state.persistent with stored data
+    this.populatePersistentState()
+  }
+
+  /**
+   * Trigger actions when component is mounted
    */
   async componentDidMount () {
 
     // start counting every second till next cup of water
     const intervalId =
-      setInterval(this.nextCupCountdownTick.bind(this), 1000);
+      setInterval(this.countdownNextTick.bind(this), 1000);
 
     // bind interval to component state
     this.setState({ nextCupWatcherId: intervalId })
@@ -133,7 +190,7 @@ export default class Dashboard extends React.Component<
    * This method checks if it's a proper
    * moment to drink next cup of water
    */
-  nextCupCountdownTick () {
+  countdownNextTick () {
 
     // skip checking if i should drink next cup if its already full
     if (!this.state.currentCup.isEmpty) {
