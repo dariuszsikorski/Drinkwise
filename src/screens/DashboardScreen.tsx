@@ -145,6 +145,29 @@ export default class Dashboard extends React.Component<
   }
 
   /**
+   * Returns true/false whether counter is operating in snooze time 
+   */
+  isSnoozeTime () {
+
+    const
+      beginTime = new Date(this.state.persistent.beginTime),
+      endTime = new Date(this.state.persistent.endTime),
+      beginMoment = moment().set({
+        'hour': beginTime.getHours(),
+        'minutes': beginTime.getMinutes(),
+        'seconds': 0
+      }),
+      endMoment = moment().set({
+        'hour': endTime.getHours(),
+        'minutes': endTime.getMinutes(),
+        'seconds': 59
+      }),
+      isSnoozeTime = !moment().isBetween(beginMoment, endMoment)
+
+      return isSnoozeTime
+  }
+
+  /**
    * This method checks if it's a proper
    * moment to drink next cup of water
    */
@@ -155,21 +178,26 @@ export default class Dashboard extends React.Component<
       return
     }
 
+    // skip checking during snoozed time
+    if (this.isSnoozeTime()) {
+      this.setState({ nextDrinkCountdownText: 'Snoozed time!' })
+      return
+    }
+
     const minutesOffset = this.state.persistent.minutesBetweenCups;
     const lastCupDate = this.state.persistent.lastDrinkDate;
 
     // minutesOffset
     const offsetedLastCupDate = moment(lastCupDate).add(minutesOffset, 'm').toDate();
-    const currentMoment = new Date();
 
-    const countdown = moment.duration(moment(offsetedLastCupDate).diff(moment(currentMoment)))
+    const countdown = moment.duration(moment(offsetedLastCupDate).diff(moment()))
 
     const formatedCountdown = countdown.asMilliseconds() <= 0
       ? 'Now!' : moment.utc(countdown.add(1, 's').as('milliseconds')).format('HH:mm:ss')
 
     this.setState({ nextDrinkCountdownText: formatedCountdown })
 
-    const isOvertime = moment(currentMoment).isAfter(offsetedLastCupDate);
+    const isOvertime = moment().isAfter(offsetedLastCupDate);
 
     if (isOvertime) {
       this.reinitWaterCupStatus()
@@ -267,7 +295,7 @@ export default class Dashboard extends React.Component<
                 source={this.state.persistent.isEmpty ? assets.cupEmpty : assets.cupFull}
               />
             </TouchableOpacity>
-            <Text>Next drink in: {this.state.nextDrinkCountdownText}</Text>
+            <Text>{this.state.nextDrinkCountdownText}</Text>
           </View>
 
           <View style={styles.DashboardRow}>
@@ -289,7 +317,6 @@ export default class Dashboard extends React.Component<
                 <Picker.Item label="1 hour 45 min" value={105} />
                 <Picker.Item label="2 hours" value={120} />
               </Picker>
-              <Text>{ this.state.persistent.minutesBetweenCups }</Text>
             </Form>
           </View>
 
@@ -323,7 +350,7 @@ export default class Dashboard extends React.Component<
           </View>
 
           <View style={styles.DashboardRow}>
-            <Text>Cup: {JSON.stringify(this.state, null, 2)}</Text>
+            <Text>{JSON.stringify(this.state, null, 2)}</Text>
           </View>
 
         </Content>
