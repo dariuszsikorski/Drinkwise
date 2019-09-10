@@ -3,7 +3,11 @@ import {Text} from 'react-native';
 import {Container, Content} from 'native-base';
 import { StyleSheet } from "react-native";
 
-export default class Default extends React.Component {
+
+/**
+ * Define settings component
+ */
+export default class Settings extends React.Component {
   render () {
     return (
       <Container style={styles.SettingsScreenContainer}>
@@ -17,11 +21,12 @@ export default class Default extends React.Component {
   }
 }
 
+
 /**
- * Component Styles
+ * Settings styles
  */
 const styles = StyleSheet.create({
   SettingsScreenContainer: {
-    borderWidth: 5
+    /* ... */
   },
 });

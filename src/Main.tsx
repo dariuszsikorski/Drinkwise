@@ -20,30 +20,35 @@ firebase.initializeApp(firebaseConfig);
 
 
 /**
- * Main component with routes
+ * Define main component with routes
  */
-function Main () {
-  return (
+export default class Main extends React.Component<
+  { /* Prop types */},
+  { /* State types */ }
+  > {
+
+    render () {
+      return (
+        <NativeRouter>
     
-    <NativeRouter>
-
-      {/* Global application header */}
-      <Header style={styles.MainHeader}>
-        <Left style={styles.MainHeaderFlexStretch} />
-        <Body  style={styles.MainHeaderFlexStretch}>
-          <Title style={styles.MainHeaderTitle}>Drinkwise</Title>
-        </Body>
-        <Right style={styles.MainHeaderFlexStretch}>
-          <SignOutButton />
-        </Right>
-      </Header>
-
-      {/* Define protected and public route paths */}
-      <PrivateRoute exact path="/" component={DashboardScreen} />
-      <Route exact path="/login" component={LoginForm} />
-      
-    </NativeRouter>
-  );
+          {/* Global application header */}
+          <Header style={styles.MainHeader}>
+            <Left style={styles.MainHeaderFlexStretch} />
+            <Body  style={styles.MainHeaderFlexStretch}>
+              <Title style={styles.MainHeaderTitle}>Drinkwise</Title>
+            </Body>
+            <Right style={styles.MainHeaderFlexStretch}>
+              <SignOutButton />
+            </Right>
+          </Header>
+    
+          {/* Define protected and public route paths */}
+          <PrivateRoute exact path="/" component={DashboardScreen} />
+          <Route exact path="/login" component={LoginForm} />
+          
+        </NativeRouter>
+      )
+    }
 }
 
 
@@ -126,7 +131,6 @@ function PrivateRoute({ component: Component, ...rest }) {
               state: { from: props.location }
             }}
           />
-
         )
       }
     />
@@ -137,7 +141,13 @@ function PrivateRoute({ component: Component, ...rest }) {
 /**
  * Login form rendered on /login route 
  */
-class LoginForm extends Component {
+class LoginForm extends Component<
+{
+  location: {
+    state: any,
+  }
+},
+{/* State Types */}> {
   state = {
     redirectToReferrer: false,
     login: 'test@test.test',
@@ -151,7 +161,7 @@ class LoginForm extends Component {
   };
 
   render() {
-    const { from } = this.props.location.state || { from: { pathname: "/" } };
+    const { from } = this.props.location.state || { from: { pathname: "/" } }
     const { redirectToReferrer } = this.state;
 
     if (redirectToReferrer) {
@@ -223,7 +233,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 10,
-    color: '#fff',
   },
   MainLogOutIcon: {
     color: '#fff',
@@ -274,6 +283,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
-
-export default Main ;
