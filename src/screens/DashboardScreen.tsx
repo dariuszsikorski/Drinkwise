@@ -1,6 +1,6 @@
 import React from 'react';
-import {Container, Content, Form, Picker} from 'native-base';
-import { StyleSheet, AsyncStorage, Image, Text, View, Button, TouchableOpacity } from "react-native";
+import {Container, Content, Form, Picker, Card, CardItem, Body} from 'native-base';
+import { StyleSheet, AsyncStorage, Image, Text, View, TouchableOpacity } from "react-native";
 import DateTimePicker from "react-native-modal-datetime-picker";
 import { Audio } from 'expo-av';
 import moment from "moment";
@@ -42,7 +42,7 @@ export default class Dashboard extends React.Component<
     super(props);
     this.state = {
       nextCupWatcherId: null,
-      nextDrinkCountdownText: null,
+      nextDrinkCountdownText: 'Ready to drink!',
       isBeginTimePickerVisible: false,
       isEndTimePickerVisible: false,
       persistent: {
@@ -108,12 +108,6 @@ export default class Dashboard extends React.Component<
   componentWillMount () {
     // populate this.state.persistent with stored data
     this.populatePersistentState()
-  }
-
-  /**
-   * Trigger actions when component is mounted
-   */
-  async componentDidMount () {
 
     // start counting every second till next cup of water
     const intervalId =
@@ -180,7 +174,7 @@ export default class Dashboard extends React.Component<
 
     // skip checking during snoozed time
     if (this.isSnoozeTime()) {
-      this.setState({ nextDrinkCountdownText: 'Snoozed time!' })
+      this.setState({ nextDrinkCountdownText: 'Zzz... Time to get a rest' })
       return
     }
 
@@ -193,7 +187,7 @@ export default class Dashboard extends React.Component<
     const countdown = moment.duration(moment(offsetedLastCupDate).diff(moment()))
 
     const formatedCountdown = countdown.asMilliseconds() <= 0
-      ? 'Now!' : moment.utc(countdown.add(1, 's').as('milliseconds')).format('HH:mm:ss')
+      ? 'Ready to drink!' : moment.utc(countdown.add(1, 's').as('milliseconds')).format('HH:mm:ss')
 
     this.setState({ nextDrinkCountdownText: formatedCountdown })
 
@@ -285,73 +279,81 @@ export default class Dashboard extends React.Component<
    */
   render () {
     return (
-      <Container style={styles.DashboardContainer}>
+      <Container>
         <Content>
 
-          <View style={styles.DashboardRow}>
-            <TouchableOpacity onPress={this.handleWaterCupTouch.bind(this)}>
+          <View style={styles.DashboardCupContainer}>
+
+            <TouchableOpacity style={styles.DahboardCupTouchable} onPress={this.handleWaterCupTouch.bind(this)}>
               <Image
-                style={{height: 254, width: 148}}
+                style={styles.DashboardCupImage}
                 source={this.state.persistent.isEmpty ? assets.cupEmpty : assets.cupFull}
               />
             </TouchableOpacity>
-            <Text>{this.state.nextDrinkCountdownText}</Text>
+            <Text style={styles.DashboardCupLabel}>{this.state.nextDrinkCountdownText}</Text>
           </View>
 
-          <View style={styles.DashboardRow}>
-            <Form>
-              <Picker
-                note
-                mode="dropdown"
-                style={styles.DashboardIntervalPicker}
-                selectedValue={this.state.persistent.minutesBetweenCups}
-                onValueChange={this.handleIntervalPicked.bind(this)}
-              >
-                <Picker.Item label="6 seconds" value={0.1} />
-                <Picker.Item label="15 minutes" value={15} />
-                <Picker.Item label="30 minutes" value={30} />
-                <Picker.Item label="45 minutes" value={45} />
-                <Picker.Item label="1 hour" value={60} />
-                <Picker.Item label="1 hour 15 min" value={75} />
-                <Picker.Item label="1 hour 30 min" value={90} />
-                <Picker.Item label="1 hour 45 min" value={105} />
-                <Picker.Item label="2 hours" value={120} />
-              </Picker>
-            </Form>
-          </View>
+          <Card style={styles.DashboardCard}>
+            <CardItem style={styles.DashboardCardItem}>
+              <Body style={styles.DashboardFormWrapper}>
 
-          <View style={styles.DashboardRow}>
+                <Text style={styles.DashboardLabel}>Time between cups</Text>
 
-            <TouchableOpacity onPress={this.showBeginTimePicker}>
-              <Text >Begin: {moment(this.state.persistent.beginTime).format('HH:mm')}</Text>
-            </TouchableOpacity>
+                <View style={styles.DashboardIntervalWrapper}>
+                  <Picker
+                    note
+                    mode="dropdown"
+                    style={styles.DashboardIntervalPicker}
+                    selectedValue={this.state.persistent.minutesBetweenCups}
+                    onValueChange={this.handleIntervalPicked.bind(this)}
+                  >
+                    <Picker.Item label="6 seconds" value={0.1} />
+                    <Picker.Item label="15 minutes" value={15} />
+                    <Picker.Item label="30 minutes" value={30} />
+                    <Picker.Item label="45 minutes" value={45} />
+                    <Picker.Item label="1 hour" value={60} />
+                    <Picker.Item label="1 hour 15 min" value={75} />
+                    <Picker.Item label="1 hour 30 min" value={90} />
+                    <Picker.Item label="1 hour 45 min" value={105} />
+                    <Picker.Item label="2 hours" value={120} />
+                  </Picker>
+                </View>
 
-            <TouchableOpacity onPress={this.showEndTimePicker}>
-              <Text>End: {moment(this.state.persistent.endTime).format('HH:mm')}</Text>
-            </TouchableOpacity>
+                <Text style={styles.DashboardLabel}>Wake time</Text>
 
-            <DateTimePicker
-              mode='time'
-              date={new Date(this.state.persistent.beginTime)}
-              timePickerModeAndroid='spinner'
-              isVisible={this.state.isBeginTimePickerVisible}
-              onConfirm={this.handleBeginTimePicked}
-              onCancel={this.hideBeginTimePicker}
-            />
+                <View style={styles.DashboardWakeTimePickers}>
+                  <TouchableOpacity onPress={this.showBeginTimePicker}>
+                    <Text style={styles.DashboardWakeTimePicker}>{moment(this.state.persistent.beginTime).format('HH:mm')}</Text>
+                  </TouchableOpacity>
 
-            <DateTimePicker
-              mode='time'
-              date={new Date(this.state.persistent.endTime)}
-              timePickerModeAndroid='spinner'
-              isVisible={this.state.isEndTimePickerVisible}
-              onConfirm={this.handleEndTimePicked}
-              onCancel={this.hideEndTimePicker}
-            />
-          </View>
+                  <Text style={styles.DashboardWakeTimeSpacer}>-</Text>
 
-          <View style={styles.DashboardRow}>
-            <Text>{JSON.stringify(this.state, null, 2)}</Text>
-          </View>
+                  <TouchableOpacity onPress={this.showEndTimePicker}>
+                    <Text style={styles.DashboardWakeTimePicker}>{moment(this.state.persistent.endTime).format('HH:mm')}</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <DateTimePicker
+                  mode='time'
+                  date={new Date(this.state.persistent.beginTime)}
+                  timePickerModeAndroid='spinner'
+                  isVisible={this.state.isBeginTimePickerVisible}
+                  onConfirm={this.handleBeginTimePicked}
+                  onCancel={this.hideBeginTimePicker}
+                />
+
+                <DateTimePicker
+                  mode='time'
+                  date={new Date(this.state.persistent.endTime)}
+                  timePickerModeAndroid='spinner'
+                  isVisible={this.state.isEndTimePickerVisible}
+                  onConfirm={this.handleEndTimePicked}
+                  onCancel={this.hideEndTimePicker}
+                />
+
+              </Body>
+            </CardItem>
+          </Card>
 
         </Content>
       </Container>
@@ -363,14 +365,59 @@ export default class Dashboard extends React.Component<
  * Dashboard component styles
  */
 const styles = StyleSheet.create({
-  DashboardContainer: {
-    borderWidth: 5
+  DashboardCupContainer: {
+    alignItems: 'center',
+  },
+  DashboardCupLabel: {
+    fontSize: 26,
+    marginTop: 15,
+    fontWeight: 'bold',
+    color: '#005bab',
+  },
+  DahboardCupTouchable: {
+    marginTop: 30    
+  },
+  DashboardCupImage: {
+    height: 254,
+    width: 148,
   },
   DashboardIntervalPicker: {
-    width: 190
+    width: 190,
   },
-  DashboardRow: {
-    borderWidth: 2,
-    borderColor: 'red'
+  DashboardCard: {
+    marginTop: 30,
+    marginLeft: 10,
+    marginRight: 10,
   },
+  DashboardLabel: {
+    marginTop: 15,
+    fontSize: 12,
+    textTransform: 'uppercase',
+    fontWeight: 'bold',
+  },
+  DashboardWakeTimePickers: {
+    flexDirection: 'row',
+    paddingHorizontal: 15,
+    paddingVertical: 0,
+  },
+  DashboardIntervalWrapper: {
+    paddingHorizontal: 15,
+  },
+  DashboardCardItem: {
+    paddingBottom: 20,
+  },
+  DashboardFormWrapper: {
+    alignItems: 'stretch',
+  },
+  DashboardWakeTimeSpacer: {
+    fontSize: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    color: '#999',
+  },
+  DashboardWakeTimePicker: {
+    fontSize: 16,
+    padding: 10,
+    color: '#999',
+  }
 });

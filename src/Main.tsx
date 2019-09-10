@@ -9,7 +9,7 @@ import {
 import * as firebase from 'firebase';
 import firebaseConfig from '../configs/firebase';
 import DashboardScreen from './screens/DashboardScreen';
-import { Header, Title, Left, Right, Body } from 'native-base';
+import { Header, Title, Left, Right, Body, Icon } from 'native-base';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 
 /**
@@ -29,12 +29,11 @@ function Main () {
     <NativeRouter>
 
       <Header style={styles.MainHeader}>
-        <Left>
-        </Left>
-        <Body>
-          <Title>DrinkWise</Title>
+        <Left style={styles.MainHeaderFlexStretch} />
+        <Body  style={styles.MainHeaderFlexStretch}>
+          <Title style={styles.MainHeaderTitle}>Drinkwise</Title>
         </Body>
-        <Right>
+        <Right style={styles.MainHeaderFlexStretch}>
           <SignOutButton />
         </Right>
       </Header>
@@ -83,13 +82,12 @@ const SignOutButton = withRouter(
     firebaseAuth.isAuthenticated ? (
       <View>
         <TouchableHighlight
-          style={styles.SessionButton}
-          underlayColor="#f0f4f7"
+          style={styles.MainLogOutButton}
           onPress={() => {
             firebaseAuth.signout(() => history.push("/"));
           }}
         >
-          <Text>Sign out</Text>
+          <Icon name='log-out' style={styles.MainLogOutIcon} />
         </TouchableHighlight>
       </View>
     ) : (
@@ -169,6 +167,13 @@ class LoginForm extends Component {
  * App styles
  */
 const styles = StyleSheet.create({
+  MainHeaderFlexStretch: {
+    flex: 1,
+  },
+  MainHeaderTitle: {
+    fontSize: 16,
+    paddingLeft: 20,
+  },
   LoginFormView: {
     borderWidth: 5
   },
@@ -178,6 +183,7 @@ const styles = StyleSheet.create({
   MainHeader: {
     paddingTop: getStatusBarHeight(),
     height: 54 + getStatusBarHeight(),
+    backgroundColor: '#005bab',
   },
   MainNavigation: {
     flexDirection: "row",
@@ -189,12 +195,20 @@ const styles = StyleSheet.create({
     padding: 10
   },
   SessionButton: {
-    width: 200,
-    backgroundColor: "green",
     justifyContent: "center",
     alignItems: "center",
     padding: 10,
-    marginTop: 10
+    color: '#fff',
+
+  },
+  MainLogOutButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 10,
+    color: '#fff',
+  },
+  MainLogOutIcon: {
+    color: '#fff',
   }
 });
 
