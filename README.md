@@ -39,6 +39,7 @@ Project is using following technologies:
 * https://facebook.github.io/react-native/
 * https://nativebase.io/
 * https://www.typescriptlang.org/
+* https://firebase.google.com/
 
 ### Building application for Android
 ```
