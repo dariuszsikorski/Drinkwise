@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { StyleSheet, Text, View, TouchableHighlight } from "react-native";
+import { StyleSheet, Text, View, TouchableHighlight, TextInput } from "react-native";
 import {
   NativeRouter,
   Route,
@@ -9,7 +9,7 @@ import {
 import * as firebase from 'firebase';
 import firebaseConfig from '../configs/firebase';
 import DashboardScreen from './screens/DashboardScreen';
-import { Header, Title, Left, Right, Body, Icon } from 'native-base';
+import { Header, Title, Left, Right, Body, Icon, Card, CardItem } from 'native-base';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 
 /**
@@ -52,8 +52,8 @@ function Main () {
  */
 const firebaseAuth = {
   isAuthenticated: false,
-  authenticate(cb) {
-    firebase.auth().signInWithEmailAndPassword('test@test.test', '123456').then(function () {
+  authenticate(login, password, cb) {
+    firebase.auth().signInWithEmailAndPassword(login, password).then(function () {
       console.log('SIGNED IN')
       firebaseAuth.isAuthenticated = true;
       cb()
@@ -123,18 +123,17 @@ function PrivateRoute({ component: Component, ...rest }) {
  * Login form and redirection
  */
 class LoginForm extends Component {
-  state = { redirectToReferrer: false };
+  state = {
+    redirectToReferrer: false,
+    login: 'test@test.test',
+    password: '123456',
+  };
 
   login = () => {
-    firebaseAuth.authenticate(() => {
+    firebaseAuth.authenticate(this.state.login, this.state.password, () => {
       this.setState({ redirectToReferrer: true });
     });
   };
-
-  // Auto log in for dev purposes
-  componentDidMount () {
-    this.login()
-  }
 
   render() {
     const { from } = this.props.location.state || { from: { pathname: "/" } };
@@ -145,18 +144,41 @@ class LoginForm extends Component {
     }
 
     return (
-      <View style={styles.LoginFormView}>
-        <Text>Welcome to Drinkwise</Text>
-        <Text style={styles.LoginFormHeader}>Login</Text>
+      
+       <Card style={styles.MainCard}>
+          <CardItem style={styles.MainCardItem}>
+            <Body style={styles.MainFormWrapper}>
 
-        <TouchableHighlight
-          style={styles.SessionButton}
-          underlayColor="#f0f4f7"
-          onPress={this.login}
-        >
-          <Text>Log in</Text>
-        </TouchableHighlight>
-      </View>
+              <Text style={styles.MainLoginHeader}>Login to your Account</Text>
+      
+              <TextInput
+                style={styles.MainLoginInput}
+                value={this.state.login}
+                placeholder="Login"
+                onChangeText={(login) => this.setState({login})}
+                placeholderTextColor = "#afb2cc"
+              ></TextInput>
+
+              <TextInput
+                style={styles.MainPasswordInput}
+                value={this.state.password}
+                placeholder="Password"
+                onChangeText={(password) => this.setState({password})}
+                placeholderTextColor = "#afb2cc"
+                secureTextEntry={true}
+              ></TextInput>
+
+              <TouchableHighlight
+                style={styles.MainLoginButton}
+                onPress={this.login}
+              >
+                <Text style={styles.MainLoginButtonText}>Log in</Text>
+              </TouchableHighlight>
+      
+            </Body>
+          </CardItem>
+        </Card>
+
     );
   }
 }
@@ -175,31 +197,13 @@ const styles = StyleSheet.create({
     paddingLeft: 20,
   },
   LoginFormView: {
-    borderWidth: 5
-  },
-  LoginFormHeader: {
-    fontSize: 30
+    borderWidth: 5,
+    borderColor: 'purple',
   },
   MainHeader: {
     paddingTop: getStatusBarHeight(),
     height: 54 + getStatusBarHeight(),
     backgroundColor: '#005bab',
-  },
-  MainNavigation: {
-    flexDirection: "row",
-    justifyContent: "space-around"
-  },
-  MainNavigationItem: {
-    flex: 1,
-    alignItems: "center",
-    padding: 10
-  },
-  SessionButton: {
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 10,
-    color: '#fff',
-
   },
   MainLogOutButton: {
     justifyContent: "center",
@@ -209,7 +213,52 @@ const styles = StyleSheet.create({
   },
   MainLogOutIcon: {
     color: '#fff',
-  }
+  },
+  MainCard: {
+    marginTop: 30,
+    marginLeft: 10,
+    marginRight: 10,
+    paddingTop: 25,
+    paddingBottom: 25,
+  },
+  MainCardItem: {
+    paddingBottom: 20,
+  },
+  MainFormWrapper: {
+    alignItems: 'stretch',
+  },
+  MainLoginHeader: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  MainLoginInput: {
+    borderBottomWidth: 1,
+    borderColor: '#bfc2cc',
+    padding: 10,
+    marginTop: 15,
+    borderRadius: 4,
+  },
+  MainPasswordInput: {
+    borderBottomWidth: 1,
+    borderColor: '#bfc2cc',
+    padding: 10,
+    marginTop: 15,
+    borderRadius: 4,
+  },
+  MainLoginButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 10,
+    marginTop: 35,
+    backgroundColor: '#34bce9',
+    borderRadius: 4.
+  },
+  MainLoginButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
 
 export default Main ;
