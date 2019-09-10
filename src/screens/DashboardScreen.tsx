@@ -1,5 +1,5 @@
 import React from 'react';
-import {Container, Content, Form, Picker, Card, CardItem, Body} from 'native-base';
+import {Container, Content, Picker, Card, CardItem, Body} from 'native-base';
 import { StyleSheet, AsyncStorage, Image, Text, View, TouchableOpacity } from "react-native";
 import DateTimePicker from "react-native-modal-datetime-picker";
 import { Audio } from 'expo-av';
@@ -15,6 +15,7 @@ const assets = {
   iceCubes: require('../../assets/ice-cubes.mp3'),
   gulp: require('../../assets/gulp.mp3')
 }
+
 
 /**
  * Define Dashboard component
@@ -55,6 +56,7 @@ export default class Dashboard extends React.Component<
     }
   }
 
+
   /**
    * Helper for setting state.persistent and saving in AsyncStorage
    * merges current data in state.persistent with given payload object
@@ -80,6 +82,7 @@ export default class Dashboard extends React.Component<
     }
   }
 
+
   /**
    * Helper for populating state.persistent from AsyncStorage
    * merges current state.persistent with already stored data
@@ -92,7 +95,6 @@ export default class Dashboard extends React.Component<
 
       if (persistentData !== null) {
         // populate state.persistent with loaded data
-        console.log('populating state with', persistentData)
         this.setPersistentState(JSON.parse(persistentData));
       }
     } catch (error) {
@@ -101,6 +103,7 @@ export default class Dashboard extends React.Component<
       console.error('Error while loading persistent data', error)
     }
   }
+
 
   /**
    * Tigger actions before component is mounted
@@ -117,6 +120,7 @@ export default class Dashboard extends React.Component<
     this.setState({ nextCupWatcherId: intervalId })
   }
 
+
   /**
    * Actions before component is removed
    */
@@ -126,23 +130,27 @@ export default class Dashboard extends React.Component<
     clearInterval(this.state.nextCupWatcherId);
   }
 
+
   /**
    * Resets current water cup to a fresh one
    */
   reinitWaterCupStatus = async () => {
     this.setPersistentState({ isEmpty: false })
 
+    // play ice cubes sound when cup is beeing filled
     const soundObject = new Audio.Sound();
     await soundObject.loadAsync(assets.iceCubes);
     await soundObject.playAsync();
 
   }
 
+
   /**
    * Returns true/false whether counter is operating in snooze time 
    */
   isSnoozeTime () {
 
+    // create moment objects based on picked begin/end time
     const
       beginTime = new Date(this.state.persistent.beginTime),
       endTime = new Date(this.state.persistent.endTime),
@@ -156,10 +164,13 @@ export default class Dashboard extends React.Component<
         'minutes': endTime.getMinutes(),
         'seconds': 59
       }),
+
+      // check if current moment is between begin and end of wake time
       isSnoozeTime = !moment().isBetween(beginMoment, endMoment)
 
       return isSnoozeTime
   }
+
 
   /**
    * This method checks if it's a proper
@@ -178,26 +189,35 @@ export default class Dashboard extends React.Component<
       return
     }
 
-    const minutesOffset = this.state.persistent.minutesBetweenCups;
-    const lastCupDate = this.state.persistent.lastDrinkDate;
+    // get time span between cups
+    const minutesBetweenCups = this.state.persistent.minutesBetweenCups;
 
-    // minutesOffset
-    const offsetedLastCupDate = moment(lastCupDate).add(minutesOffset, 'm').toDate();
+    // get time of last drink
+    const lastDrinkDate = this.state.persistent.lastDrinkDate;
 
-    const countdown = moment.duration(moment(offsetedLastCupDate).diff(moment()))
+    // calculate exptected moment for the next drink
+    const nextDrinkTime = moment(lastDrinkDate).add(minutesBetweenCups, 'm').toDate();
 
-    const formatedCountdown = countdown.asMilliseconds() <= 0
-      ? 'Ready to drink!' : moment.utc(countdown.add(1, 's').as('milliseconds')).format('HH:mm:ss')
+    // calculate remaining time till next drink
+    const remainingTime = moment.duration(moment(nextDrinkTime).diff(moment()))
 
-    this.setState({ nextDrinkCountdownText: formatedCountdown })
+    // prepare formatted countdown text
+    const countdownText = remainingTime.asMilliseconds() <= 0
+      ? 'Ready to drink!' : moment.utc(remainingTime.add(1, 's').as('milliseconds')).format('HH:mm:ss')
 
-    const isOvertime = moment().isAfter(offsetedLastCupDate);
+    // push countdown text into state
+    this.setState({ nextDrinkCountdownText: countdownText })
 
-    if (isOvertime) {
+    // check if current moment is right for the next drink
+    const isReadyForNextDrink = moment().isAfter(nextDrinkTime);
+
+    // if next drink is ready - prepare fill the cup
+    if (isReadyForNextDrink) {
       this.reinitWaterCupStatus()
     }
 
   }
+
 
   /**
    * Show Begin time picker
@@ -206,12 +226,14 @@ export default class Dashboard extends React.Component<
     this.setState({ isBeginTimePickerVisible: true });
   }
 
+
   /**
    * Hide Begin time picker
    */
   hideBeginTimePicker = () => {
     this.setState({ isBeginTimePickerVisible: false });
   }
+
 
   /**
    * Handle Pick of Begin time
@@ -221,30 +243,31 @@ export default class Dashboard extends React.Component<
     this.hideBeginTimePicker();
   }
 
+
   /**
    * Show End time picker
    */
   showEndTimePicker = () => {
-    console.log('showEndTimePicker')
     this.setState({ isEndTimePickerVisible: true });
   }
+
 
   /**
    * Hide End time picker
    */
   hideEndTimePicker = () => {
-    console.log('hideEndTimePicker')
     this.setState({ isEndTimePickerVisible: false });
   }
+
 
   /**
    * Handle pick of end time
    */
   handleEndTimePicked = date => {
-    console.log("End time picked: ", date);
     this.setPersistentState({ endTime: date });
     this.hideEndTimePicker();
   }
+
 
   /**
    * Handle Pick of reminder interval
@@ -252,6 +275,7 @@ export default class Dashboard extends React.Component<
   handleIntervalPicked (newInterval) {
     this.setPersistentState({ minutesBetweenCups: newInterval })
   }
+
 
   /**
    * Empty the water cup when its touched
@@ -268,11 +292,13 @@ export default class Dashboard extends React.Component<
       lastDrinkDate: new Date()
     })
 
+    // play gulp sound when emptying cup
     const soundObject = new Audio.Sound();
     await soundObject.loadAsync(assets.gulp);
     await soundObject.playAsync();
 
   }
+
 
   /**
    * Render template of the component
@@ -282,8 +308,9 @@ export default class Dashboard extends React.Component<
       <Container>
         <Content>
 
-          <View style={styles.DashboardCupContainer}>
 
+          {/* Water cup image with dynamic label */}
+          <View style={styles.DashboardCupContainer}>
             <TouchableOpacity style={styles.DahboardCupTouchable} onPress={this.handleWaterCupTouch.bind(this)}>
               <Image
                 style={styles.DashboardCupImage}
@@ -293,12 +320,15 @@ export default class Dashboard extends React.Component<
             <Text style={styles.DashboardCupLabel}>{this.state.nextDrinkCountdownText}</Text>
           </View>
 
+
+          {/* Time settings form */}
           <Card style={styles.DashboardCard}>
             <CardItem style={styles.DashboardCardItem}>
               <Body style={styles.DashboardFormWrapper}>
 
-                <Text style={styles.DashboardLabel}>Time between cups</Text>
 
+                {/* Time between cups form */}
+                <Text style={styles.DashboardLabel}>Time between cups</Text>
                 <View style={styles.DashboardIntervalWrapper}>
                   <Picker
                     note
@@ -319,6 +349,8 @@ export default class Dashboard extends React.Component<
                   </Picker>
                 </View>
 
+
+                {/* Wake application form */}
                 <Text style={styles.DashboardLabel}>Wake time</Text>
 
                 <View style={styles.DashboardWakeTimePickers}>
@@ -354,15 +386,15 @@ export default class Dashboard extends React.Component<
               </Body>
             </CardItem>
           </Card>
-
         </Content>
       </Container>
     )
   }
 }
 
+
 /**
- * Dashboard component styles
+ * Dashboard styles
  */
 const styles = StyleSheet.create({
   DashboardCupContainer: {

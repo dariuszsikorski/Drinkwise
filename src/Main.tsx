@@ -12,12 +12,11 @@ import DashboardScreen from './screens/DashboardScreen';
 import { Header, Title, Left, Right, Body, Icon, Card, CardItem } from 'native-base';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 
+
 /**
- * Initialize Firebase
+ * Initialize Firebase connection
  */ 
 firebase.initializeApp(firebaseConfig);
-
-
 
 
 /**
@@ -28,6 +27,7 @@ function Main () {
     
     <NativeRouter>
 
+      {/* Global application header */}
       <Header style={styles.MainHeader}>
         <Left style={styles.MainHeaderFlexStretch} />
         <Body  style={styles.MainHeaderFlexStretch}>
@@ -38,6 +38,7 @@ function Main () {
         </Right>
       </Header>
 
+      {/* Define protected and public route paths */}
       <PrivateRoute exact path="/" component={DashboardScreen} />
       <Route exact path="/login" component={LoginForm} />
       
@@ -46,39 +47,43 @@ function Main () {
 }
 
 
-
 /**
- * Store authentication state and sign-in/out methods
+ * Store authentication status and sign-in/out methods
  */
 const firebaseAuth = {
+  // current authentication status
   isAuthenticated: false,
-  authenticate(login, password, cb) {
+
+  // handle user authentication with given credentials
+  authenticate(login, password, callback) {
     firebase.auth().signInWithEmailAndPassword(login, password).then(function () {
-      console.log('SIGNED IN')
       firebaseAuth.isAuthenticated = true;
-      cb()
+      callback()
     }).catch(function(error) {
-      console.log('SIGN IN ERROR', error.code, error.message);
+      console.error('SIGN IN ERROR', error.code, error.message);
     });
   },
-  signout(cb) {
+
+  // handle user sign-out
+  signout(callback) {
     firebase.auth().signOut().then(function() {
-      console.log('SIGNED OUT');
       firebaseAuth.isAuthenticated = false;
-      cb()
+      callback()
     }).catch(function(error) {
-      console.log('SIGN OUT ERROR');
+      console.error('SIGN OUT ERROR');
     });
   },
 };
 
 
-
 /**
- * Sign Out Button
+ * Sign out icon rendered on header
  */
 const SignOutButton = withRouter(
+  // create component with router for history access
   ({ history }) =>
+
+    // render button only if authenticated
     firebaseAuth.isAuthenticated ? (
       <View>
         <TouchableHighlight
@@ -91,36 +96,46 @@ const SignOutButton = withRouter(
         </TouchableHighlight>
       </View>
     ) : (
-      // Not logged in state
+
+      // do not render if not authenticated
       null
     )
 );
 
+
 /**
- * Routes requiring authentication
+ * Special component rendering private
+ * routes or redirecting to login form
  */
 function PrivateRoute({ component: Component, ...rest }) {
+  
   return (
     <Route
       {...rest}
       render={props =>
         firebaseAuth.isAuthenticated ? (
+
+          // render protected view if authenticated
           <Component {...props} />
         ) : (
+
+          // redirect to login path if non-authenticated
           <Redirect
             to={{
               pathname: "/login",
               state: { from: props.location }
             }}
           />
+
         )
       }
     />
   );
 }
 
+
 /**
- * Login form and redirection
+ * Login form rendered on /login route 
  */
 class LoginForm extends Component {
   state = {
@@ -129,7 +144,7 @@ class LoginForm extends Component {
     password: '123456',
   };
 
-  login = () => {
+  handleLoginClick = () => {
     firebaseAuth.authenticate(this.state.login, this.state.password, () => {
       this.setState({ redirectToReferrer: true });
     });
@@ -145,32 +160,37 @@ class LoginForm extends Component {
 
     return (
       
+       // render login form  
        <Card style={styles.MainCard}>
           <CardItem style={styles.MainCardItem}>
             <Body style={styles.MainFormWrapper}>
 
+              {/* Header */}
               <Text style={styles.MainLoginHeader}>Login to your Account</Text>
       
+              {/* Login Input  */}
               <TextInput
                 style={styles.MainLoginInput}
                 value={this.state.login}
                 placeholder="Login"
-                onChangeText={(login) => this.setState({login})}
+                onChangeText={(loginString) => this.setState({loginString})}
                 placeholderTextColor = "#afb2cc"
               ></TextInput>
 
+              {/* Password Input */}
               <TextInput
                 style={styles.MainPasswordInput}
                 value={this.state.password}
                 placeholder="Password"
-                onChangeText={(password) => this.setState({password})}
+                onChangeText={(passwordString) => this.setState({passwordString})}
                 placeholderTextColor = "#afb2cc"
                 secureTextEntry={true}
               ></TextInput>
 
+              {/* Log-in BUtton */}
               <TouchableHighlight
                 style={styles.MainLoginButton}
-                onPress={this.login}
+                onPress={this.handleLoginClick}
               >
                 <Text style={styles.MainLoginButtonText}>Log in</Text>
               </TouchableHighlight>
@@ -178,15 +198,13 @@ class LoginForm extends Component {
             </Body>
           </CardItem>
         </Card>
-
     );
   }
 }
 
 
-
 /**
- * App styles
+ * Main styles
  */
 const styles = StyleSheet.create({
   MainHeaderFlexStretch: {
@@ -195,10 +213,6 @@ const styles = StyleSheet.create({
   MainHeaderTitle: {
     fontSize: 16,
     paddingLeft: 20,
-  },
-  LoginFormView: {
-    borderWidth: 5,
-    borderColor: 'purple',
   },
   MainHeader: {
     paddingTop: getStatusBarHeight(),
@@ -260,5 +274,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
 
 export default Main ;
